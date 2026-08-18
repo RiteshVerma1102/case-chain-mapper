@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,64 +6,103 @@
 
 @layer base {
   :root {
-    --background: 220 16% 12%;
-    --foreground: 220 10% 92%;
+    /* Apple-inspired Light Palette Default */
+    --background: 240 6% 97%;       /* #F5F5F7 */
+    --foreground: 240 3% 12%;       /* #1D1D1F */
 
-    --card: 220 16% 15%;
-    --card-foreground: 220 10% 92%;
+    --card: 0 0% 100%;              /* #FFFFFF */
+    --card-foreground: 240 3% 12%;  /* #1D1D1F */
 
-    --popover: 220 16% 14%;
-    --popover-foreground: 220 10% 92%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 3% 12%;
 
-    --primary: 38 92% 60%;
-    --primary-foreground: 220 16% 8%;
+    --primary: 211 100% 45%;        /* #0071E3 (Apple Blue) */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 12% 20%;
-    --secondary-foreground: 220 10% 70%;
+    --secondary: 240 5% 93%;        /* #E8E8ED */
+    --secondary-foreground: 240 3% 20%;
 
-    --muted: 220 12% 18%;
-    --muted-foreground: 220 8% 52%;
+    --muted: 240 5% 93%;
+    --muted-foreground: 240 3% 44%; /* #6E6E73 */
 
-    --accent: 220 60% 60%;
-    --accent-foreground: 220 10% 95%;
+    --accent: 211 100% 45%;         /* #0071E3 */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;       /* Restrained Red */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 5% 88%;           /* Subtle Border */
+    --input: 240 5% 88%;
+    --ring: 211 100% 45%;
+
+    --radius: 0.875rem;
+
+    /* Semantic investigation tokens */
+    --priority-high: 0 72% 51%;
+    --priority-medium: 35 90% 50%;
+    --priority-low: 142 60% 40%;
+    --status-open: 211 100% 45%;
+    --status-closed: 240 3% 44%;
+
+    /* Accent system */
+    --gold: 38 92% 50%;
+    --blue: 211 100% 45%;
+    --teal: 175 55% 42%;
+    --rose: 0 72% 51%;
+    --emerald: 142 60% 40%;
+    --amber: 35 90% 50%;
+    --violet: 260 55% 50%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 3% 44%;
+    --sidebar-primary: 211 100% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 95%;
+    --sidebar-accent-foreground: 240 3% 12%;
+    --sidebar-border: 240 5% 88%;
+    --sidebar-ring: 211 100% 45%;
+
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-display: 'Space Grotesk', -apple-system, sans-serif;
+  }
+
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 211 100% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 70%;
+
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 211 100% 55%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 56%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 12% 22%;
-    --input: 220 12% 22%;
-    --ring: 38 92% 60%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 211 100% 55%;
 
-    --radius: 0.625rem;
-
-    /* Semantic investigation tokens */
-    --priority-high: 0 72% 56%;
-    --priority-medium: 38 92% 60%;
-    --priority-low: 152 60% 48%;
-    --status-open: 220 60% 60%;
-    --status-closed: 220 8% 52%;
-
-    /* Accent system */
-    --gold: 38 92% 60%;
-    --blue: 220 60% 60%;
-    --teal: 175 55% 48%;
-    --rose: 0 72% 56%;
-    --emerald: 152 60% 48%;
-    --amber: 38 80% 55%;
-    --violet: 260 55% 60%;
-
-    --sidebar-background: 220 18% 10%;
-    --sidebar-foreground: 220 8% 60%;
-    --sidebar-primary: 38 92% 60%;
-    --sidebar-primary-foreground: 220 16% 8%;
-    --sidebar-accent: 220 14% 16%;
-    --sidebar-accent-foreground: 220 10% 88%;
-    --sidebar-border: 220 12% 18%;
-    --sidebar-ring: 38 92% 60%;
-
-    --font-sans: 'Inter', system-ui, sans-serif;
-    --font-mono: 'IBM Plex Mono', monospace;
-    --font-display: 'Space Grotesk', sans-serif;
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 60%;
+    --sidebar-primary: 211 100% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 18%;
   }
 }
 
@@ -77,12 +116,13 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background-color: #F5F5F7;
   }
 
-  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 999px; }
-  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.4); }
+  ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
 }
 
 @layer components {
@@ -93,68 +133,62 @@
     font-family: var(--font-mono);
   }
 
-  /* Subtle dot grid background */
-  .bg-dots {
-    background-image: radial-gradient(circle, hsl(var(--border) / 0.5) 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-
   /* Glass card */
   .glass-card {
-    background: hsl(var(--card) / 0.7);
-    backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--border));
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: var(--radius);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   }
 
   /* Metric card */
   .metric-card {
-    @apply relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-300;
+    @apply relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-300;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
   }
   .metric-card:hover {
-    border-color: hsl(var(--primary) / 0.3);
-    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.1);
+    border-color: #0071E3;
+    box-shadow: 0 4px 16px rgba(0, 113, 227, 0.08);
   }
 
   /* Intel button */
   .intel-btn {
-    @apply inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200;
-    background: hsl(var(--secondary));
-    border: 1px solid hsl(var(--border));
-    color: hsl(var(--foreground));
+    @apply inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200;
+    background: #E8E8ED;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: #1D1D1F;
   }
   .intel-btn:hover {
-    background: hsl(var(--muted));
-    border-color: hsl(var(--primary) / 0.3);
-    color: hsl(var(--primary));
+    background: #E0E0E5;
+    color: #0071E3;
   }
 
   .intel-btn-primary {
-    @apply inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200;
-    background: hsl(var(--primary) / 0.12);
-    border: 1px solid hsl(var(--primary) / 0.3);
-    color: hsl(var(--primary));
+    @apply inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200;
+    background: #0071E3;
+    color: #FFFFFF;
+    box-shadow: 0 2px 8px rgba(0, 113, 227, 0.25);
   }
   .intel-btn-primary:hover {
-    background: hsl(var(--primary) / 0.2);
-    border-color: hsl(var(--primary) / 0.5);
+    background: #0077ED;
+    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.35);
   }
 
   /* Intel input */
   .intel-input {
-    @apply w-full rounded-lg px-4 py-2.5 text-sm transition-all duration-200;
-    background: hsl(var(--secondary));
-    border: 1px solid hsl(var(--border));
-    color: hsl(var(--foreground));
+    @apply w-full rounded-xl px-4 py-3 text-sm transition-all duration-200;
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    color: #1D1D1F;
     font-family: var(--font-sans);
   }
   .intel-input::placeholder {
-    color: hsl(var(--muted-foreground));
+    color: #6E6E73;
   }
   .intel-input:focus {
     outline: none;
-    border-color: hsl(var(--primary) / 0.5);
-    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.08);
+    border-color: #0071E3;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
   }
 
   /* Status indicator */
@@ -164,7 +198,7 @@
   .status-live::before {
     content: '';
     @apply h-2 w-2 rounded-full;
-    background: hsl(var(--emerald));
+    background: #2E7D32;
     animation: status-blink 2s ease-in-out infinite;
   }
 
@@ -173,35 +207,43 @@
     @apply flex items-center gap-3 mb-6;
   }
   .section-title {
-    @apply font-display text-xl font-semibold text-foreground tracking-tight;
+    @apply font-display text-2xl font-bold text-foreground tracking-tight;
   }
   .section-line {
     @apply h-px flex-1 bg-gradient-to-r from-border to-transparent;
   }
   .section-subtitle {
-    @apply text-sm text-muted-foreground mt-1;
-  }
-
-  /* Priority indicator bar on cards */
-  .priority-bar {
-    @apply absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl;
+    @apply text-base text-muted-foreground mt-1;
   }
 }
 
 @layer utilities {
-  .text-gold { color: hsl(var(--gold)); }
-  .text-blue { color: hsl(var(--blue)); }
-  .text-teal { color: hsl(var(--teal)); }
-  .text-rose { color: hsl(var(--rose)); }
-  .text-emerald { color: hsl(var(--emerald)); }
-  .text-amber-accent { color: hsl(var(--amber)); }
-  .text-violet { color: hsl(var(--violet)); }
+  .text-gold { color: #D97706; }
+  .text-blue { color: #0071E3; }
+  .text-teal { color: #0D9488; }
+  .text-rose { color: #E53935; }
+  .text-emerald { color: #2E7D32; }
+  .text-amber-accent { color: #D97706; }
+  .text-violet { color: #7C3AED; }
 
-  .bg-gold { background-color: hsl(var(--gold)); }
-  .bg-blue { background-color: hsl(var(--blue)); }
-  .bg-teal { background-color: hsl(var(--teal)); }
-  .bg-rose { background-color: hsl(var(--rose)); }
-  .bg-emerald { background-color: hsl(var(--emerald)); }
+  .bg-gold { background-color: #FEF3C7; color: #D97706; }
+  .bg-blue { background-color: #E0F2FE; color: #0071E3; }
+  .bg-teal { background-color: #CCFBF1; color: #0D9488; }
+  .bg-rose { background-color: #FEE2E2; color: #E53935; }
+  .bg-emerald { background-color: #DCFCE7; color: #2E7D32; }
+}
+
+@media print {
+  aside, header, button {
+    display: none !important;
+  }
+  body, main {
+    background: white !important;
+    color: black !important;
+  }
+  .print\:p-0 {
+    padding: 0 !important;
+  }
 }
 
 @keyframes status-blink {

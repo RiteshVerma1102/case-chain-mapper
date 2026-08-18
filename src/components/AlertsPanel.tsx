@@ -1,70 +1,61 @@
 import { useMemo } from "react";
 import { useCases } from "@/context/CaseContext";
-import { AlertTriangle, ShieldAlert, Info, Bell, ChevronRight, Siren } from "lucide-react";
+import { ShieldCheck, ChevronRight, Bell } from "lucide-react";
 
 export default function AlertsPanel() {
   const { generateAlerts, cases } = useCases();
   const alerts = useMemo(() => generateAlerts(), [generateAlerts, cases]);
 
-  const typeConfig = {
-    critical: { icon: Siren, border: "border-destructive/25", bg: "bg-destructive/5", headerBg: "bg-destructive/8", text: "text-destructive", dot: "bg-destructive", label: "Critical" },
-    warning: { icon: AlertTriangle, border: "border-primary/25", bg: "bg-primary/5", headerBg: "bg-primary/8", text: "text-primary", dot: "bg-primary", label: "Warning" },
-    info: { icon: Info, border: "border-accent/25", bg: "bg-accent/5", headerBg: "bg-accent/8", text: "text-accent", dot: "bg-accent", label: "Info" },
-  };
-
   return (
-    <div className="animate-fade-in">
-      <div className="mb-6">
+    <div className="animate-fade-in max-w-4xl mx-auto space-y-8 font-sans pb-16">
+      <div>
         <div className="flex items-center gap-3">
-          <h2 className="font-display text-xl font-semibold tracking-tight text-foreground">Alert Center</h2>
+          <h2 className="font-display text-4xl font-bold tracking-tight text-[#1D1D1F]">Alert Center</h2>
           {alerts.length > 0 && (
-            <span className="text-xs font-medium bg-destructive/10 text-destructive px-2.5 py-1 rounded-lg border border-destructive/20">
-              {alerts.length} active
+            <span className="text-xs font-semibold bg-[#E53935]/10 text-[#E53935] px-3 py-1 rounded-full">
+              {alerts.length} Patterns Flagged
             </span>
           )}
         </div>
-        <p className="text-sm text-muted-foreground mt-1">Intelligent threat detection • Linked list analysis</p>
+        <p className="text-lg text-[#6E6E73] mt-1">Important patterns that need attention.</p>
       </div>
 
       {alerts.length === 0 && (
-        <div className="rounded-xl border border-border bg-card p-12 text-center">
-          <ShieldAlert size={28} className="mx-auto text-emerald mb-3" />
-          <p className="text-sm font-medium text-emerald">All Clear</p>
-          <p className="text-xs text-muted-foreground mt-1">No active alerts detected</p>
+        <div className="rounded-3xl bg-white border border-black/5 p-12 text-center space-y-2 shadow-sm">
+          <ShieldCheck size={32} className="mx-auto text-[#2E7D32]" />
+          <p className="text-lg font-bold text-[#1D1D1F]">All Clear</p>
+          <p className="text-sm text-[#6E6E73]">No suspicious case relationship patterns detected across active nodes.</p>
         </div>
       )}
 
       <div className="space-y-4">
         {alerts.map((alert, i) => {
-          const cfg = typeConfig[alert.type];
-          const Icon = cfg.icon;
+          const dotColor = alert.type === "critical" ? "bg-[#E53935]" : alert.type === "warning" ? "bg-[#D97706]" : "bg-[#0071E3]";
+
           return (
-            <div key={i} className={`rounded-xl border ${cfg.border} overflow-hidden animate-fade-in`} style={{ animationDelay: `${i * 80}ms`, opacity: 0 }}>
-              <div className={`${cfg.headerBg} px-5 py-4 flex items-center gap-3`}>
-                <Icon size={18} className={cfg.text} />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className={`text-[10px] font-semibold tracking-wide ${cfg.text}`}>{cfg.label}</span>
-                    <div className={`h-1.5 w-1.5 rounded-full ${cfg.dot} animate-pulse-glow`} />
-                  </div>
-                  <p className="text-sm font-semibold text-foreground">{alert.title}</p>
-                </div>
-              </div>
-              <div className={`${cfg.bg} px-5 py-4`}>
-                <p className="text-sm text-foreground/80 mb-3">{alert.message}</p>
-                {alert.relatedCases.length > 0 && (
-                  <div className="space-y-2">
-                    <span className="text-xs text-muted-foreground font-medium">Related Cases:</span>
-                    {alert.relatedCases.map(c => (
-                      <div key={c.caseId} className="flex items-center gap-3 rounded-lg bg-card px-3 py-2.5 border border-border">
-                        <ChevronRight size={11} className={cfg.text} />
-                        <span className="font-mono text-xs text-muted-foreground">{c.caseId}</span>
-                        <span className="text-sm text-foreground flex-1 truncate">{c.title}</span>
-                        <span className="text-xs text-muted-foreground">{c.suspectName}</span>
+            <div key={i} className="rounded-3xl bg-white border border-black/5 p-6 shadow-sm space-y-4">
+              <div className="flex items-start gap-4">
+                <div className={`h-3 w-3 rounded-full ${dotColor} mt-1.5 shrink-0`} />
+                <div className="flex-1 space-y-1">
+                  <span className="text-xs font-bold text-[#6E6E73] uppercase tracking-wider">{alert.type}</span>
+                  <h3 className="text-lg font-bold text-[#1D1D1F]">{alert.title}</h3>
+                  <p className="text-sm text-[#6E6E73] leading-relaxed">{alert.message}</p>
+
+                  {alert.relatedCases.length > 0 && (
+                    <div className="pt-3 space-y-2">
+                      <p className="text-xs font-semibold text-[#1D1D1F]">Affected Cases ({alert.relatedCases.length}):</p>
+                      <div className="space-y-1.5">
+                        {alert.relatedCases.map((c) => (
+                          <div key={c.caseId} className="flex items-center gap-3 p-3 rounded-xl bg-[#F5F5F7] text-xs">
+                            <span className="font-mono font-bold text-[#0071E3]">{c.caseId}</span>
+                            <span className="font-semibold text-[#1D1D1F] flex-1 truncate">{c.title}</span>
+                            <span className="text-[#6E6E73]">{c.suspectName}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           );

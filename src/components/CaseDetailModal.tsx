@@ -5,8 +5,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  X, AlertTriangle, CheckCircle, User, Calendar, FileText, Link2,
-  Shield, Clock, Tag, Activity, ChevronRight, Download, Loader2,
+  AlertTriangle, CheckCircle, User, Calendar, FileText, Link2,
+  Shield, Clock, Tag, Activity, ChevronRight, Download, Loader2, FileSpreadsheet,
 } from "lucide-react";
 import { generateInvestigationReportPDF } from "@/lib/pdfExporter";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ interface CaseDetailModalProps {
   caseData: CaseData | null;
   open: boolean;
   onClose: () => void;
+  onOpenReport?: (caseData: CaseData) => void;
 }
 
 type Tab = "overview" | "related" | "timeline";
@@ -25,7 +26,7 @@ const priorityColors: Record<string, { dot: string; text: string; bg: string }> 
   Low: { dot: "bg-intel-emerald", text: "text-emerald", bg: "bg-intel-emerald/10" },
 };
 
-export default function CaseDetailModal({ caseData, open, onClose }: CaseDetailModalProps) {
+export default function CaseDetailModal({ caseData, open, onClose, onOpenReport }: CaseDetailModalProps) {
   const { findRelatedCases, updateCase, cases } = useCases();
   const [tab, setTab] = useState<Tab>("overview");
   const [isExporting, setIsExporting] = useState(false);
@@ -68,6 +69,11 @@ export default function CaseDetailModal({ caseData, open, onClose }: CaseDetailM
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const handleOpenFullReport = () => {
+    onClose();
+    if (onOpenReport) onOpenReport(caseData);
   };
 
   return (
@@ -144,7 +150,7 @@ export default function CaseDetailModal({ caseData, open, onClose }: CaseDetailM
               </div>
 
               {/* Action buttons */}
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <button onClick={toggleStatus} className="intel-btn-primary flex-1 justify-center">
                   {status === "Open" ? (
                     <><CheckCircle size={14} /> Mark as Resolved</>
@@ -153,14 +159,20 @@ export default function CaseDetailModal({ caseData, open, onClose }: CaseDetailM
                   )}
                 </button>
                 <button 
+                  onClick={handleOpenFullReport}
+                  className="intel-btn flex-1 justify-center bg-primary text-primary-foreground font-semibold"
+                >
+                  <FileSpreadsheet size={14} /> Generate Case Report
+                </button>
+                <button 
                   onClick={handleExportPDF}
                   disabled={isExporting}
-                  className="intel-btn-primary flex-1 justify-center"
+                  className="intel-btn flex-1 justify-center"
                 >
                   {isExporting ? (
                     <><Loader2 size={14} className="animate-spin" /> Exporting...</>
                   ) : (
-                    <><Download size={14} /> Export Report</>
+                    <><Download size={14} /> Download PDF</>
                   )}
                 </button>
               </div>

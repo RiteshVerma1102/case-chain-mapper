@@ -215,7 +215,7 @@ export class CaseLinkedList {
 
   private _mergeSort(
     head: CaseNode | null,
-    compareFn: (a: CaseData, b: CaseData) => number
+    compareFn:     (a: CaseData, b: CaseData) => number
   ): CaseNode | null {
     // Base case: 0 or 1 elements — already sorted
     if (!head || !head.next) return head;
