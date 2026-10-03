@@ -1,37 +1,37 @@
 /**
  * ============================================================
- * LINKED LIST DATA STRUCTURE FOR CASE MANAGEMENT
+ * LINKED LIST DATA STRUCTURE FOR CASECHAIN INVESTIGATION
  * ============================================================
  * 
- * This module implements a custom Singly Linked List to store
- * investigation cases. Arrays are NOT used for primary storage.
- * 
- * KEY DSA CONCEPTS DEMONSTRATED:
- * - Linked List: insert, delete, traverse, search
- * - Merge Sort on Linked List (O(n log n))
+ * Singly Linked List data structure to store and analyze cases.
+ * Provides:
+ * - O(1) insertion at head
  * - Recursive Search (find by ID, find by suspect)
- * - Pattern Analysis via traversal
+ * - Merge Sort on Linked List (O(n log n)) for date and priority
+ * - Pattern Analysis & Cross-case entity detection via traversal
  */
 
-// ─── Types ───────────────────────────────────────────────────
-
-export type Priority = "High" | "Medium" | "Low";
-export type Status = "Open" | "Closed";
+export type Priority = "Critical" | "High" | "Medium" | "Low";
+export type Status = "New" | "Under Investigation" | "On Hold" | "Resolved" | "Closed" | "Open";
 
 export interface CaseData {
   caseId: string;
   title: string;
+  caseName?: string;
   description: string;
   priority: Priority;
   status: Status;
   suspectName: string;
-  date: string; // ISO date string
+  date: string; // ISO date string or YYYY-MM-DD
+  category?: string;
+  investigator?: string;
+  deadline?: string;
+  progress?: number;
+  location?: string;
+  tags?: string[];
+  _id?: string;
 }
 
-/**
- * Node class for the Singly Linked List.
- * Each node holds one investigation case and a pointer to the next node.
- */
 export class CaseNode {
   data: CaseData;
   next: CaseNode | null;
@@ -42,10 +42,58 @@ export class CaseNode {
   }
 }
 
-/**
- * Singly Linked List for storing investigation cases.
- * Provides O(1) insertion at head, O(n) search/delete.
- */
+export interface PatternAnalysis {
+  totalCases: number;
+  suspectFrequency: Record<string, number>;
+  topKeywords: [string, number][];
+  priorityCounts: Record<string, number>;
+  statusCounts: Record<string, number>;
+  mostFrequentSuspect: { name: string; count: number } | null;
+  insights: string[];
+}
+
+export interface CaseConnection {
+  from: string;
+  to: string;
+  suspect: string;
+  strength: "strong" | "moderate";
+}
+
+export interface RelationshipGraph {
+  suspectMap: Map<string, CaseData[]>;
+  connections: CaseConnection[];
+}
+
+export interface Alert {
+  alertId?: string;
+  type: "critical" | "warning" | "info" | "high";
+  title: string;
+  message: string;
+  relatedCases?: CaseData[] | string[];
+  caseId?: string;
+  category?: string;
+  isRead?: boolean;
+}
+
+export interface SearchFilters {
+  keyword?: string;
+  priority?: string;
+  status?: string;
+  category?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+// Comparators for sorting
+export const compareByPriority = (a: CaseData, b: CaseData): number => {
+  const rank: Record<string, number> = { Critical: 4, High: 3, Medium: 2, Low: 1 };
+  return (rank[b.priority] || 0) - (rank[a.priority] || 0);
+};
+
+export const compareByDate = (a: CaseData, b: CaseData): number => {
+  return new Date(b.date).getTime() - new Date(a.date).getTime();
+};
+
 export class CaseLinkedList {
   head: CaseNode | null;
   private _size: number;
@@ -59,12 +107,6 @@ export class CaseLinkedList {
     return this._size;
   }
 
-  // ─── INSERT ──────────────────────────────────────────────
-
-  /**
-   * Insert a new case at the head of the linked list.
-   * Time Complexity: O(1)
-   */
   insert(data: CaseData): void {
     const newNode = new CaseNode(data);
     newNode.next = this.head;
@@ -72,16 +114,9 @@ export class CaseLinkedList {
     this._size++;
   }
 
-  // ─── DELETE ──────────────────────────────────────────────
-
-  /**
-   * Delete a case by its ID.
-   * Time Complexity: O(n) — must traverse to find the node.
-   */
   deleteById(caseId: string): boolean {
     if (!this.head) return false;
 
-    // Special case: deleting the head
     if (this.head.data.caseId === caseId) {
       this.head = this.head.next;
       this._size--;
@@ -100,8 +135,6 @@ export class CaseLinkedList {
     return false;
   }
 
-  // ─── UPDATE ──────────────────────────────────────────────
-
   updateCase(caseId: string, updates: Partial<CaseData>): boolean {
     const node = this._findNodeById(this.head, caseId);
     if (node) {
@@ -111,83 +144,52 @@ export class CaseLinkedList {
     return false;
   }
 
-  // ─── RECURSIVE SEARCH ────────────────────────────────────
-
-  /**
-   * RECURSION: Search for a case by ID using recursive traversal.
-   * Base case: node is null (not found) or node matches.
-   * Recursive case: search the next node.
-   */
   findById(caseId: string): CaseData | null {
     const node = this._findNodeById(this.head, caseId);
     return node ? node.data : null;
   }
 
   private _findNodeById(node: CaseNode | null, caseId: string): CaseNode | null {
-    // Base case: end of list
     if (!node) return null;
-    // Base case: found
-    if (node.data.caseId === caseId) return node;
-    // Recursive case: check next node
+    if (node.data.caseId.toLowerCase() === caseId.toLowerCase()) return node;
     return this._findNodeById(node.next, caseId);
   }
 
-  /**
-   * RECURSION: Find ALL cases linked to a specific suspect.
-   * Recursively traverses the entire list, collecting matches.
-   */
   findBySuspect(suspectName: string): CaseData[] {
     const results: CaseData[] = [];
-    this._findBySuspectRecursive(this.head, suspectName.toLowerCase(), results);
+    this._findBySuspectRecursive(this.head, suspectName.toLowerCase().trim(), results);
     return results;
   }
 
-  private _findBySuspectRecursive(
-    node: CaseNode | null,
-    suspect: string,
-    results: CaseData[]
-  ): void {
-    // Base case: end of list
+  private _findBySuspectRecursive(node: CaseNode | null, suspect: string, results: CaseData[]): void {
     if (!node) return;
-    // Check if this node's suspect matches
-    if (node.data.suspectName.toLowerCase().includes(suspect)) {
+    if (node.data.suspectName.toLowerCase().trim().includes(suspect)) {
       results.push(node.data);
     }
-    // Recursive case: continue to next node
     this._findBySuspectRecursive(node.next, suspect, results);
   }
 
-  /**
-   * RECURSION: Search cases by keyword in title or description.
-   */
   searchByKeyword(keyword: string): CaseData[] {
     const results: CaseData[] = [];
-    this._searchKeywordRecursive(this.head, keyword.toLowerCase(), results);
+    const term = keyword.toLowerCase().trim();
+    if (!term) return this.toArray();
+
+    let current = this.head;
+    while (current) {
+      const c = current.data;
+      if (
+        c.title.toLowerCase().includes(term) ||
+        c.description.toLowerCase().includes(term) ||
+        c.caseId.toLowerCase().includes(term) ||
+        c.suspectName.toLowerCase().includes(term)
+      ) {
+        results.push(c);
+      }
+      current = current.next;
+    }
     return results;
   }
 
-  private _searchKeywordRecursive(
-    node: CaseNode | null,
-    keyword: string,
-    results: CaseData[]
-  ): void {
-    if (!node) return;
-    const { title, description } = node.data;
-    if (
-      title.toLowerCase().includes(keyword) ||
-      description.toLowerCase().includes(keyword)
-    ) {
-      results.push(node.data);
-    }
-    this._searchKeywordRecursive(node.next, keyword, results);
-  }
-
-  // ─── CONVERT TO ARRAY (for rendering only) ──────────────
-
-  /**
-   * Convert linked list to array for React rendering.
-   * The linked list remains the source of truth.
-   */
   toArray(): CaseData[] {
     const arr: CaseData[] = [];
     let current = this.head;
@@ -198,48 +200,28 @@ export class CaseLinkedList {
     return arr;
   }
 
-  // ─── MERGE SORT ON LINKED LIST ───────────────────────────
-
-  /**
-   * MERGE SORT: Sort the linked list in-place.
-   * Time Complexity: O(n log n)
-   * Space Complexity: O(log n) for recursion stack
-   * 
-   * This is a proper linked list merge sort — it splits the list
-   * using the slow/fast pointer technique, recursively sorts both
-   * halves, and merges them back together.
-   */
-  sort(compareFn: (a: CaseData, b: CaseData) => number): void {
-    this.head = this._mergeSort(this.head, compareFn);
+  // MERGE SORT ON LINKED LIST (O(n log n))
+  sort(comparator: (a: CaseData, b: CaseData) => number): void {
+    if (!this.head || !this.head.next) return;
+    this.head = this._mergeSort(this.head, comparator);
   }
 
-  private _mergeSort(
-    head: CaseNode | null,
-    compareFn:     (a: CaseData, b: CaseData) => number
-  ): CaseNode | null {
-    // Base case: 0 or 1 elements — already sorted
+  private _mergeSort(head: CaseNode | null, cmp: (a: CaseData, b: CaseData) => number): CaseNode | null {
     if (!head || !head.next) return head;
 
-    // Split the list into two halves using slow/fast pointers
-    const mid = this._getMiddle(head);
-    const secondHalf = mid.next;
-    mid.next = null; // Cut the list
+    const middle = this._getMiddle(head);
+    const nextOfMiddle = middle.next;
+    middle.next = null;
 
-    // Recursively sort both halves
-    const left = this._mergeSort(head, compareFn);
-    const right = this._mergeSort(secondHalf, compareFn);
+    const left = this._mergeSort(head, cmp);
+    const right = this._mergeSort(nextOfMiddle, cmp);
 
-    // Merge the sorted halves
-    return this._merge(left, right, compareFn);
+    return this._sortedMerge(left, right, cmp);
   }
 
-  /**
-   * Find the middle node using the slow/fast pointer technique.
-   * Slow moves 1 step, fast moves 2 steps.
-   */
   private _getMiddle(head: CaseNode): CaseNode {
-    let slow = head;
-    let fast = head.next;
+    let slow: CaseNode = head;
+    let fast: CaseNode | null = head.next;
     while (fast && fast.next) {
       slow = slow.next!;
       fast = fast.next.next;
@@ -247,59 +229,52 @@ export class CaseLinkedList {
     return slow;
   }
 
-  /**
-   * Merge two sorted linked lists into one sorted list.
-   */
-  private _merge(
-    left: CaseNode | null,
-    right: CaseNode | null,
-    compareFn: (a: CaseData, b: CaseData) => number
+  private _sortedMerge(
+    a: CaseNode | null,
+    b: CaseNode | null,
+    cmp: (a: CaseData, b: CaseData) => number
   ): CaseNode | null {
-    // Create a dummy head to simplify merging
-    const dummy = new CaseNode({} as CaseData);
-    let tail = dummy;
+    if (!a) return b;
+    if (!b) return a;
 
-    while (left && right) {
-      if (compareFn(left.data, right.data) <= 0) {
-        tail.next = left;
-        left = left.next;
-      } else {
-        tail.next = right;
-        right = right.next;
-      }
-      tail = tail.next;
+    let result: CaseNode;
+    if (cmp(a.data, b.data) <= 0) {
+      result = a;
+      result.next = this._sortedMerge(a.next, b, cmp);
+    } else {
+      result = b;
+      result.next = this._sortedMerge(a, b.next, cmp);
     }
-
-    // Append remaining nodes
-    tail.next = left || right;
-    return dummy.next;
+    return result;
   }
 
-  // ─── PATTERN ANALYSIS ────────────────────────────────────
-
-  /**
-   * Analyze patterns across all cases.
-   * Uses traversal to compute frequency maps and insights.
-   */
+  // PATTERN ANALYSIS
   analyzePatterns(): PatternAnalysis {
+    let totalCases = 0;
     const suspectFrequency: Record<string, number> = {};
     const keywordFrequency: Record<string, number> = {};
-    const priorityCounts = { High: 0, Medium: 0, Low: 0 };
-    const statusCounts = { Open: 0, Closed: 0 };
-    let totalCases = 0;
+    const priorityCounts: Record<string, number> = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+    const statusCounts: Record<string, number> = {
+      New: 0,
+      'Under Investigation': 0,
+      'On Hold': 0,
+      Resolved: 0,
+      Closed: 0,
+      Open: 0,
+    };
 
     let current = this.head;
     while (current) {
-      const c = current.data;
       totalCases++;
+      const c = current.data;
 
-      // Count suspect appearances
-      const suspect = c.suspectName.toLowerCase().trim();
-      if (suspect) {
-        suspectFrequency[suspect] = (suspectFrequency[suspect] || 0) + 1;
+      // Suspect frequency
+      if (c.suspectName && c.suspectName !== 'Unknown') {
+        const key = c.suspectName.trim();
+        suspectFrequency[key] = (suspectFrequency[key] || 0) + 1;
       }
 
-      // Extract keywords from title & description
+      // Keyword frequency
       const words = `${c.title} ${c.description}`
         .toLowerCase()
         .replace(/[^a-z0-9\s]/g, "")
@@ -309,13 +284,12 @@ export class CaseLinkedList {
         keywordFrequency[word] = (keywordFrequency[word] || 0) + 1;
       }
 
-      priorityCounts[c.priority]++;
-      statusCounts[c.status]++;
+      if (priorityCounts[c.priority] !== undefined) priorityCounts[c.priority]++;
+      if (statusCounts[c.status] !== undefined) statusCounts[c.status]++;
 
       current = current.next;
     }
 
-    // Find most frequent suspect
     let mostFrequentSuspect = "";
     let maxFreq = 0;
     for (const [suspect, count] of Object.entries(suspectFrequency)) {
@@ -325,30 +299,22 @@ export class CaseLinkedList {
       }
     }
 
-    // Top keywords (filter common words)
-    const commonWords = new Set(["this", "that", "with", "from", "have", "been", "were", "they", "their", "case", "the"]);
-    const topKeywords = Object.entries(keywordFrequency)
+    const commonWords = new Set(["this", "that", "with", "from", "have", "been", "were", "they", "their", "case", "the", "into"]);
+    const topKeywords: [string, number][] = Object.entries(keywordFrequency)
       .filter(([word]) => !commonWords.has(word))
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+      .slice(0, 5) as [string, number][];
 
-    // Generate insights
     const insights: string[] = [];
     if (mostFrequentSuspect && maxFreq > 1) {
-      insights.push(
-        `Suspect "${mostFrequentSuspect}" appears in ${maxFreq} linked cases`
-      );
+      insights.push(`Cross-Case Pattern: Suspect "${mostFrequentSuspect}" is connected to ${maxFreq} active cases.`);
     }
-    if (priorityCounts.High > totalCases * 0.4 && totalCases > 2) {
-      insights.push("High-priority cases are dominating the caseload");
+    if ((priorityCounts.Critical + priorityCounts.High) > totalCases * 0.4 && totalCases > 2) {
+      insights.push("High/Critical-priority investigations are dominating the active caseload.");
     }
-    if (statusCounts.Open > statusCounts.Closed && totalCases > 2) {
-      insights.push(
-        `${statusCounts.Open} cases remain open — investigation backlog detected`
-      );
-    }
-    if (topKeywords.length > 0 && topKeywords[0][1] > 2) {
-      insights.push(`Recurring keyword pattern: "${topKeywords[0][0]}" appears ${topKeywords[0][1]} times`);
+    const openCount = (statusCounts['Under Investigation'] || 0) + (statusCounts.New || 0) + (statusCounts.Open || 0);
+    if (openCount > 3) {
+      insights.push(`Active Velocity: ${openCount} investigations currently active in the intelligence pipeline.`);
     }
 
     return {
@@ -357,19 +323,12 @@ export class CaseLinkedList {
       topKeywords,
       priorityCounts,
       statusCounts,
-      mostFrequentSuspect: mostFrequentSuspect
-        ? { name: mostFrequentSuspect, count: maxFreq }
-        : null,
+      mostFrequentSuspect: mostFrequentSuspect ? { name: mostFrequentSuspect, count: maxFreq } : null,
       insights,
     };
   }
 
-  // ─── SMART CASE RECOMMENDATIONS ──────────────────────────
-
-  /**
-   * RECURSION: Find cases related to a given case by shared suspect or keywords.
-   * Scores each node recursively and sorts by relevance.
-   */
+  // SMART CASE RECOMMENDATIONS / RELATED CASES
   findRelatedCases(caseId: string, maxResults: number = 5): CaseData[] {
     const targetNode = this._findNodeById(this.head, caseId);
     if (!targetNode) return [];
@@ -383,17 +342,7 @@ export class CaseLinkedList {
     const scored: { data: CaseData; score: number }[] = [];
     this._scoreRelatedRecursive(this.head, target, targetWords, scored);
 
-    // Insertion sort for DSA demonstration
-    for (let i = 1; i < scored.length; i++) {
-      const key = scored[i];
-      let j = i - 1;
-      while (j >= 0 && scored[j].score < key.score) {
-        scored[j + 1] = scored[j];
-        j--;
-      }
-      scored[j + 1] = key;
-    }
-
+    scored.sort((a, b) => b.score - a.score);
     return scored.slice(0, maxResults).map(s => s.data);
   }
 
@@ -406,8 +355,15 @@ export class CaseLinkedList {
     if (!node) return;
     if (node.data.caseId !== target.caseId) {
       let score = 0;
-      if (node.data.suspectName.toLowerCase().trim() === target.suspectName.toLowerCase().trim()) score += 10;
-      if (node.data.priority === target.priority) score += 2;
+      if (node.data.suspectName && target.suspectName && node.data.suspectName.toLowerCase().trim() === target.suspectName.toLowerCase().trim()) {
+        score += 10;
+      }
+      if (node.data.category && target.category && node.data.category === target.category) {
+        score += 4;
+      }
+      if (node.data.priority === target.priority) {
+        score += 2;
+      }
       const words = `${node.data.title} ${node.data.description}`.toLowerCase()
         .replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(w => w.length > 3);
       for (const w of words) {
@@ -418,8 +374,6 @@ export class CaseLinkedList {
     this._scoreRelatedRecursive(node.next, target, targetWords, results);
   }
 
-  // ─── RELATIONSHIP GRAPH ──────────────────────────────────
-
   buildRelationshipGraph(): RelationshipGraph {
     const suspectMap = new Map<string, CaseData[]>();
     const connections: CaseConnection[] = [];
@@ -427,8 +381,10 @@ export class CaseLinkedList {
     let current = this.head;
     while (current) {
       const key = current.data.suspectName.toLowerCase().trim();
-      if (!suspectMap.has(key)) suspectMap.set(key, []);
-      suspectMap.get(key)!.push(current.data);
+      if (key && key !== 'unknown') {
+        if (!suspectMap.has(key)) suspectMap.set(key, []);
+        suspectMap.get(key)!.push(current.data);
+      }
       current = current.next;
     }
 
@@ -448,8 +404,6 @@ export class CaseLinkedList {
     return { suspectMap, connections };
   }
 
-  // ─── TIMELINE ────────────────────────────────────────────
-
   getTimeline(): CaseData[] {
     const clone = new CaseLinkedList();
     const arr = this.toArray();
@@ -458,18 +412,16 @@ export class CaseLinkedList {
     return clone.toArray();
   }
 
-  // ─── ALERT GENERATION ────────────────────────────────────
-
   generateAlerts(): Alert[] {
     const alerts: Alert[] = [];
     const analysis = this.analyzePatterns();
 
-    if (analysis.priorityCounts.High >= 2) {
+    if ((analysis.priorityCounts.Critical || 0) + (analysis.priorityCounts.High || 0) >= 2) {
       alerts.push({
         type: "critical",
-        title: "Multiple Critical Cases Active",
-        message: `${analysis.priorityCounts.High} high-priority cases require immediate attention`,
-        relatedCases: this._collectByPriorityRecursive(this.head, "High", []),
+        title: "Multiple High/Critical Cases Active",
+        message: `${(analysis.priorityCounts.Critical || 0) + (analysis.priorityCounts.High || 0)} priority investigations require active coordination.`,
+        relatedCases: this._collectByPriority(this.head, "High", []),
       });
     }
 
@@ -477,110 +429,52 @@ export class CaseLinkedList {
       if (count >= 2) {
         alerts.push({
           type: "warning",
-          title: `Repeat Suspect: ${suspect}`,
-          message: `"${suspect}" appears in ${count} cases — possible serial pattern`,
+          title: `Repeat Person of Interest: ${suspect}`,
+          message: `"${suspect}" is linked to ${count} distinct cases. Cross-case nexus identified.`,
           relatedCases: this.findBySuspect(suspect),
         });
       }
     }
 
-    if (analysis.statusCounts.Open > analysis.statusCounts.Closed * 2 && analysis.totalCases > 3) {
-      alerts.push({
-        type: "info",
-        title: "Investigation Backlog",
-        message: `${analysis.statusCounts.Open} open vs ${analysis.statusCounts.Closed} closed — resources may need reallocation`,
-        relatedCases: [],
-      });
-    }
-
     return alerts;
   }
 
-  private _collectByPriorityRecursive(node: CaseNode | null, priority: Priority, results: CaseData[]): CaseData[] {
+  private _collectByPriority(node: CaseNode | null, priority: Priority, results: CaseData[]): CaseData[] {
     if (!node) return results;
-    if (node.data.priority === priority) results.push(node.data);
-    return this._collectByPriorityRecursive(node.next, priority, results);
+    if (node.data.priority === priority || (priority === 'High' && node.data.priority === 'Critical')) {
+      results.push(node.data);
+    }
+    return this._collectByPriority(node.next, priority, results);
   }
-
-  // ─── ADVANCED SEARCH ─────────────────────────────────────
 
   advancedSearch(filters: SearchFilters): CaseData[] {
     const results: CaseData[] = [];
-    this._advancedSearchRecursive(this.head, filters, results);
+    let current = this.head;
+    while (current) {
+      const c = current.data;
+      let match = true;
+
+      if (filters.keyword && filters.keyword.trim()) {
+        const kw = filters.keyword.toLowerCase().trim();
+        const text = `${c.caseId} ${c.title} ${c.description} ${c.suspectName}`.toLowerCase();
+        if (!text.includes(kw)) match = false;
+      }
+
+      if (filters.priority && filters.priority !== 'All' && c.priority !== filters.priority) {
+        match = false;
+      }
+
+      if (filters.status && filters.status !== 'All' && c.status !== filters.status) {
+        match = false;
+      }
+
+      if (filters.category && filters.category !== 'All' && c.category !== filters.category) {
+        match = false;
+      }
+
+      if (match) results.push(c);
+      current = current.next;
+    }
     return results;
   }
-
-  private _advancedSearchRecursive(
-    node: CaseNode | null,
-    filters: SearchFilters,
-    results: CaseData[]
-  ): void {
-    if (!node) return;
-    let match = true;
-    const c = node.data;
-
-    if (filters.keyword) {
-      const kw = filters.keyword.toLowerCase();
-      if (!c.title.toLowerCase().includes(kw) && !c.description.toLowerCase().includes(kw) && !c.suspectName.toLowerCase().includes(kw))
-        match = false;
-    }
-    if (filters.priority && c.priority !== filters.priority) match = false;
-    if (filters.status && c.status !== filters.status) match = false;
-
-    if (match) results.push(c);
-    this._advancedSearchRecursive(node.next, filters, results);
-  }
-}
-
-// ─── TYPES ──────────────────────────────────────────────────
-
-export interface PatternAnalysis {
-  totalCases: number;
-  suspectFrequency: Record<string, number>;
-  topKeywords: [string, number][];
-  priorityCounts: { High: number; Medium: number; Low: number };
-  statusCounts: { Open: number; Closed: number };
-  mostFrequentSuspect: { name: string; count: number } | null;
-  insights: string[];
-}
-
-export interface CaseConnection {
-  from: string;
-  to: string;
-  suspect: string;
-  strength: "strong" | "moderate";
-}
-
-export interface RelationshipGraph {
-  suspectMap: Map<string, CaseData[]>;
-  connections: CaseConnection[];
-}
-
-export interface Alert {
-  type: "critical" | "warning" | "info";
-  title: string;
-  message: string;
-  relatedCases: CaseData[];
-}
-
-export interface SearchFilters {
-  keyword?: string;
-  priority?: Priority;
-  status?: Status;
-}
-
-// ─── COMPARATOR FUNCTIONS FOR SORTING ────────────────────
-
-const PRIORITY_WEIGHT: Record<Priority, number> = {
-  High: 3,
-  Medium: 2,
-  Low: 1,
-};
-
-export function compareByPriority(a: CaseData, b: CaseData): number {
-  return PRIORITY_WEIGHT[b.priority] - PRIORITY_WEIGHT[a.priority];
-}
-
-export function compareByDate(a: CaseData, b: CaseData): number {
-  return new Date(b.date).getTime() - new Date(a.date).getTime();
 }

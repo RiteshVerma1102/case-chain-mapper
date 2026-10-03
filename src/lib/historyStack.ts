@@ -1,49 +1,54 @@
 /**
  * ============================================================
- * UNDO / REDO HISTORY STACK MODULE
+ * STACK-BASED HISTORY MANAGER (UNDO / REDO)
  * ============================================================
- * Stack-based history snapshot manager for case modifications.
+ * 
+ * Implements undo/redo using two stacks (HistoryStack and RedoStack).
  */
 
-import { Stack } from "@/dsa/stack/Stack";
-import { CaseData } from "./LinkedList";
+export class HistoryManager<T = any> {
+  private undoStack: T[] = [];
+  private redoStack: T[] = [];
+  private maxDepth: number;
 
-export class HistoryManager {
-  private undoStack = new Stack<CaseData[]>();
-  private redoStack = new Stack<CaseData[]>();
-
-  pushSnapshot(currentCases: CaseData[]): void {
-    this.undoStack.push(JSON.parse(JSON.stringify(currentCases)));
-    this.redoStack.clear();
+  constructor(maxDepth: number = 30) {
+    this.maxDepth = maxDepth;
   }
 
-  undo(currentCases: CaseData[]): CaseData[] | null {
-    if (this.undoStack.isEmpty()) return null;
-
-    this.redoStack.push(JSON.parse(JSON.stringify(currentCases)));
-    return this.undoStack.pop() ?? null;
+  pushSnapshot(state: T): void {
+    const clone = JSON.parse(JSON.stringify(state));
+    this.undoStack.push(clone);
+    if (this.undoStack.length > this.maxDepth) {
+      this.undoStack.shift();
+    }
+    // Any new action clears the redo stack
+    this.redoStack = [];
   }
 
-  redo(currentCases: CaseData[]): CaseData[] | null {
-    if (this.redoStack.isEmpty()) return null;
+  undo(currentState: T): T | null {
+    if (this.undoStack.length === 0) return null;
+    const previous = this.undoStack.pop()!;
+    this.redoStack.push(JSON.parse(JSON.stringify(currentState)));
+    return previous;
+  }
 
-    this.undoStack.push(JSON.parse(JSON.stringify(currentCases)));
-    return this.redoStack.pop() ?? null;
+  redo(currentState: T): T | null {
+    if (this.redoStack.length === 0) return null;
+    const next = this.redoStack.pop()!;
+    this.undoStack.push(JSON.parse(JSON.stringify(currentState)));
+    return next;
   }
 
   canUndo(): boolean {
-    return !this.undoStack.isEmpty();
+    return this.undoStack.length > 0;
   }
 
   canRedo(): boolean {
-    return !this.redoStack.isEmpty();
+    return this.redoStack.length > 0;
   }
 
-  getUndoCount(): number {
-    return this.undoStack.size();
-  }
-
-  getRedoCount(): number {
-    return this.redoStack.size();
+  clear(): void {
+    this.undoStack = [];
+    this.redoStack = [];
   }
 }
